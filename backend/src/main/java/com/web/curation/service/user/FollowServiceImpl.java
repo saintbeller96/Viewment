@@ -8,7 +8,7 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.web.curation.domain.User;
 import com.web.curation.domain.connection.Follow;
-import com.web.curation.dto.notification.FirebaseNotiDto;
+
 import com.web.curation.dto.user.SimpleUserInfoDto;
 import com.web.curation.exceptions.ElementNotFoundException;
 import com.web.curation.exceptions.UserNotFoundException;
@@ -51,7 +51,7 @@ public class FollowServiceImpl implements FollowService {
     }
 
     @Override
-    public Long follow(String userId, String targetUserId) throws FirebaseMessagingException {
+    public Long follow(String userId, String targetUserId) {
         User from = getUser(userId);
         User to = getUser(targetUserId);
 
@@ -67,23 +67,7 @@ public class FollowServiceImpl implements FollowService {
 
         followRepository.save(follow);
 
-        if (to.isFollowNoti()) {
-            Message message = Message.builder()
-                    .setNotification(Notification.builder()
-                            .setTitle("Viewment")
-                            .setBody(from.getNickname() + " 님이 팔로우 하셨습니다")
-                            .build())
-                    .setTopic("follow-" + to.getId())
-                    .build();
-            FirebaseMessaging.getInstance().send(message);
-            saveNoti(to, from);
-        }
         return follow.getId();
-    }
-
-    private void saveNoti(User to, User from) {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("noti/" + to.getId());
-        ref.push().setValueAsync(new FirebaseNotiDto(to, from));
     }
 
     @Override
