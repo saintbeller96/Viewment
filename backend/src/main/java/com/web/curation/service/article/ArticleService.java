@@ -19,7 +19,6 @@ import com.web.curation.dto.article.ArticleDto;
 import com.web.curation.dto.article.ArticleFeedDto;
 import com.web.curation.dto.article.ArticleInfoDto;
 import com.web.curation.dto.article.ArticleSimpleDto;
-import com.web.curation.dto.notification.FirebaseNotiDto;
 import com.web.curation.dto.user.SimpleUserInfoDto;
 import com.web.curation.exceptions.ElementNotFoundException;
 import com.web.curation.exceptions.UserNotFoundException;
@@ -79,7 +78,7 @@ public class ArticleService {
     private final FollowRepository followRepository;
     private final ImageRepository imageRepository;
 
-    public Article write(ArticleDto articleDto) throws FirebaseMessagingException {
+    public Article write(ArticleDto articleDto) {
         Article article = new Article();
 
         User user = getUser(articleDto.getUserId());
@@ -103,31 +102,7 @@ public class ArticleService {
         Article savedArticle = articleRepository.save(article);
         List<MemoryPin> memoryPins = memoryPinRepository.findByPin(savedArticle.getPin());
 
-        List<Message> messages = new ArrayList<>();
-        memoryPins.stream()
-                .forEach(memoryPin -> {
-                    Memory memory = memoryPin.getMemory();
-                    if (memory.getUser().isMemoryNoti() && !memory.getUser().getId().equals(savedArticle.getUser().getId())) {
-                        Message message = Message.builder()
-                                .setNotification(Notification.builder()
-                                        .setTitle("Viewment")
-                                        .setBody(memory.getName() + "에 새로운 사진이 등록되었습니다")
-                                        .build())
-                                .setTopic("memory-" + memory.getUser().getId())
-                                .build();
-                        messages.add(message);
-                        saveNoti(memory, savedArticle);
-                    }
-                });
-        if (messages.size() > 0)
-            FirebaseMessaging.getInstance().sendAll(messages);
-
         return savedArticle;
-    }
-
-    private void saveNoti(Memory memory, Article article) {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("noti/" + memory.getUser().getId());
-        ref.push().setValueAsync(new FirebaseNotiDto(memory.getUser(), article, memory));
     }
 
     @Transactional(readOnly = true)
@@ -369,7 +344,7 @@ public class ArticleService {
      */
 
     @Transactional
-    public void like(String userId, Long articleId) throws FirebaseMessagingException {
+    public void like(String userId, Long articleId) {
         User user = getUser(userId);
         Article article = getArticle(articleId);
 
@@ -387,26 +362,6 @@ public class ArticleService {
 
         user.addLike(like);
         article.addLike(like);
-
-        if (article.getUser().isLikeNoti() && !article.getUser().getId().equals(user.getId())) {
-            Message message = Message.builder()
-                    .setNotification(Notification.builder()
-                            .setTitle("Viewment")
-                            .setBody(user.getNickname() + " 님이 회원님의 글을 좋아합니다")
-                            .build())
-                    .setTopic("like-" + article.getUser().getId())
-                    .build();
-//        System.out.println("이벤트 발생: " + "like-" + newLikeEvent.getTo().getId());
-            FirebaseMessaging.getInstance().send(message);
-            saveNoti(article.getUser(), user, article);
-
-        }
-
-    }
-
-    private void saveNoti(User to, User from, Article article) {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("noti/" + to.getId());
-        ref.push().setValueAsync(new FirebaseNotiDto(to, from, article));
     }
 
     @Transactional

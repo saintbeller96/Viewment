@@ -51,12 +51,7 @@ public class ArticleController {
     public ResponseEntity<Long> writeArticleNoPin(@RequestBody ArticleDto articleDto) {
 
         Article savedArticle = null;
-        try {
-            savedArticle = articleService.write(articleDto);
-        } catch (FirebaseMessagingException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-
-        }
+        savedArticle = articleService.write(articleDto);
         return ResponseEntity.ok().body(savedArticle.getArticleId());
     }
 
@@ -65,12 +60,7 @@ public class ArticleController {
     public ResponseEntity<Long> writeArticlewithPin(@RequestBody ArticleDto articleDto) {
 
         Article savedArticle = null;
-        try {
-            savedArticle = articleService.write(articleDto);
-        } catch (FirebaseMessagingException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-
-        }
+        savedArticle = articleService.write(articleDto);
         return ResponseEntity.ok().body(savedArticle.getArticleId());
     }
 
@@ -164,13 +154,7 @@ public class ArticleController {
     @PostMapping("/{articleId}/like")
     public ResponseEntity<String> likeArticle(@PathVariable("articleId") Long articleId, Authentication authentication) {
         final String currentUserId = ((UserDetails)authentication.getPrincipal()).getUsername();
-
-        try {
-            articleService.like(currentUserId, articleId);
-        } catch (FirebaseMessagingException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-
+        articleService.like(currentUserId, articleId);
         return ResponseEntity.ok().body("like");
     }
 
